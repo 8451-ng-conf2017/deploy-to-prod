@@ -15,10 +15,43 @@ const entryPoints = ["inline","polyfills","sw-register","styles","vendor","main"
 const baseHref = "";
 const deployUrl = "";
 
+function envSpecificPlugins(env) {
 
+  if(env.mode === "aot") {
+    return {
+      "plugins": [
+        new AotPlugin({
+        "mainPath": "main.ts",
+        "hostReplacementPaths": {
+          "environments/environment.ts": "environments/environment.ts"
+        },
+        "exclude": [],
+        "tsConfigPath": "src/tsconfig.app.json",
+      })]
+    }
+  } else if (env.mode === "jit") {
+    return {
+      "plugins": [
+        new AotPlugin({
+        "mainPath": "main.ts",
+        "hostReplacementPaths": {
+          "environments/environment.ts": "environments/environment.ts"
+        },
+        "exclude": [],
+        "tsConfigPath": "src/tsconfig.app.json",
+        "skipCodeGeneration": true
+      })]
+    }
+  } else {
+    throw new Error(`Unknown mode '${env.mode}'`);
+  }
+}
 
+module.exports = function(env) {
 
-module.exports = {
+  const {plugins} = envSpecificPlugins(env);
+
+  return {
   "devtool": "source-map",
   "devServer": {
     "historyApiFallback": true
@@ -285,15 +318,7 @@ module.exports = {
         "context": ""
       }
     }),
-    new AotPlugin({
-      "mainPath": "main.ts",
-      "hostReplacementPaths": {
-        "environments/environment.ts": "environments/environment.ts"
-      },
-      "exclude": [],
-      "tsConfigPath": "src/tsconfig.app.json",
-      "skipCodeGeneration": true
-    })
+    ...plugins
   ],
   "node": {
     "fs": "empty",
@@ -306,4 +331,5 @@ module.exports = {
     "clearImmediate": false,
     "setImmediate": false
   }
+}
 };
